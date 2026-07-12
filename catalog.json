@@ -1,0 +1,62 @@
+[
+  {
+    "name": "Mutual Non-Disclosure Agreement",
+    "description": "Common Paper standard Mutual Non-Disclosure Agreement (MNDA) Standard Terms, allowing two parties to exchange confidential information for a stated purpose.",
+    "filename": "Mutual-NDA.md"
+  },
+  {
+    "name": "Mutual Non-Disclosure Agreement - Cover Page",
+    "description": "Cover page for the Common Paper Mutual Non-Disclosure Agreement, used to complete party details, purpose, term, and governing law before signing.",
+    "filename": "Mutual-NDA-coverpage.md"
+  },
+  {
+    "name": "Cloud Service Agreement",
+    "description": "Common Paper standard Cloud Service Agreement (CSA) Standard Terms for a provider to license a cloud-hosted product or service to a customer.",
+    "filename": "CSA.md"
+  },
+  {
+    "name": "Design Partner Agreement",
+    "description": "Common Paper standard Design Partner Agreement, granting early access to a product to a partner in exchange for feedback during a product development program.",
+    "filename": "design-partner-agreement.md"
+  },
+  {
+    "name": "Service Level Agreement",
+    "description": "Common Paper standard Service Level Agreement (SLA) Standard Terms defining uptime targets, response times, and service credits for a cloud service.",
+    "filename": "sla.md"
+  },
+  {
+    "name": "Professional Services Agreement",
+    "description": "Common Paper standard Professional Services Agreement (PSA) Standard Terms governing statements of work, deliverables, and fees for professional services engagements.",
+    "filename": "psa.md"
+  },
+  {
+    "name": "Data Processing Agreement",
+    "description": "Common Paper standard Data Processing Agreement (DPA) Standard Terms addressing the processing of personal data, subprocessors, and international data transfers.",
+    "filename": "DPA.md"
+  },
+  {
+    "name": "Software License Agreement",
+    "description": "Common Paper standard Software License Agreement Standard Terms for licensing installable software from a provider to a customer.",
+    "filename": "Software-License-Agreement.md"
+  },
+  {
+    "name": "Partnership Agreement",
+    "description": "Common Paper standard Partnership Agreement Standard Terms covering mutual business obligations, trademark licensing, and other partnership terms between two companies.",
+    "filename": "Partnership-Agreement.md"
+  },
+  {
+    "name": "Pilot Agreement",
+    "description": "Common Paper standard Pilot Agreement Standard Terms for a customer to evaluate a provider's product during a fixed pilot period before entering a definitive agreement.",
+    "filename": "Pilot-Agreement.md"
+  },
+  {
+    "name": "Business Associate Agreement",
+    "description": "Common Paper standard Business Associate Agreement (BAA) Standard Terms for HIPAA-covered entities and business associates handling protected health information (PHI).",
+    "filename": "BAA.md"
+  },
+  {
+    "name": "AI Addendum",
+    "description": "Common Paper standard AI Addendum Standard Terms supplementing a product agreement with terms governing AI/ML features, model training, and AI-generated output.",
+    "filename": "AI-Addendum.md"
+  }
+]
