@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.standard-terms h1 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.standard-terms ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.standard-terms p {
+  margin-top: 0.5rem;
+}
+
+.standard-terms a {
+  text-decoration: underline;
+}
+
+@media print {
+  @page {
+    margin: 0.75in;
+  }
+
+  /* The form/preview panes scroll independently on screen; printing needs
+     the full document to flow across pages instead of clipping to a pane. */
+  body,
+  .mnda-scroll-pane {
+    background: #ffffff;
+    color: #000000;
+    height: auto !important;
+    overflow: visible !important;
+  }
+}
