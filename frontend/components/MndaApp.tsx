@@ -13,7 +13,10 @@ export default function MndaApp({ rawStandardTerms }: { rawStandardTerms: string
 
   return (
     <div className="mnda-scroll-pane grid grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:[grid-template-rows:minmax(0,1fr)]">
-      <section className="mnda-scroll-pane flex flex-col gap-4 print:hidden lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2">
+      <section
+        data-testid="agreement-form-pane"
+        className="mnda-scroll-pane flex flex-col gap-4 print:hidden lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2"
+      >
         <div>
           <h2 className="text-lg font-semibold">Agreement details</h2>
           <p className="text-sm text-foreground/60">
@@ -27,7 +30,10 @@ export default function MndaApp({ rawStandardTerms }: { rawStandardTerms: string
         />
       </section>
 
-      <section className="mnda-scroll-pane flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pl-2">
+      <section
+        data-testid="agreement-preview-pane"
+        className="mnda-scroll-pane flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pl-2"
+      >
         <div className="flex items-center justify-between print:hidden">
           <h2 className="text-lg font-semibold">Preview</h2>
           <button
