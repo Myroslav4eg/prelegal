@@ -1,20 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { render, screen, within } from "@testing-library/react";
-import { defaultMndaValues, type MndaFormValues } from "@/lib/mnda";
+import { makeValues } from "@/lib/mnda.testHelpers";
 import MndaDocument from "./MndaDocument";
 
 const rawStandardTerms =
   'Confidential Information is disclosed for the <span class="coverpage_link">Purpose</span> ' +
   'and governed by the laws of <span class="coverpage_link">Governing Law</span>.';
-
-function makeValues(overrides: Partial<MndaFormValues> = {}): MndaFormValues {
-  return {
-    ...defaultMndaValues,
-    party1: { ...defaultMndaValues.party1 },
-    party2: { ...defaultMndaValues.party2 },
-    ...overrides,
-  };
-}
 
 describe("MndaDocument", () => {
   it("renders the cover-page values entered by the user", () => {

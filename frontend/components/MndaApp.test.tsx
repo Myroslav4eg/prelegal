@@ -37,6 +37,21 @@ describe("MndaApp", () => {
     printSpy.mockRestore();
   });
 
+  it("never renders NaN when the MNDA Term years field is cleared mid-edit", async () => {
+    const user = userEvent.setup();
+    render(<MndaApp rawStandardTerms={rawStandardTerms} />);
+
+    const [mndaYearsInput] = screen.getAllByRole("spinbutton");
+    await user.clear(mndaYearsInput);
+
+    const coverPage = within(screen.getByText("Cover Page", { selector: "h2" }).closest("section")!);
+    await waitFor(() => expect(coverPage.getByText(/Expires \d+ year\(s\)/)).toBeInTheDocument());
+    expect(coverPage.queryByText(/NaN/)).not.toBeInTheDocument();
+
+    await user.type(mndaYearsInput, "5");
+    await waitFor(() => expect(coverPage.getByText("Expires 5 year(s) from the Effective Date.")).toBeInTheDocument());
+  });
+
   it("keeps party names entered in the form out of each other's fields", async () => {
     const user = userEvent.setup();
     render(<MndaApp rawStandardTerms={rawStandardTerms} />);

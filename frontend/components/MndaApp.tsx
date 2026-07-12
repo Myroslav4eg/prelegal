@@ -1,18 +1,22 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { defaultMndaValues, type MndaFormValues } from "@/lib/mnda";
 import MndaForm from "@/components/MndaForm";
 import MndaDocument from "@/components/MndaDocument";
 
 export default function MndaApp({ rawStandardTerms }: { rawStandardTerms: string }) {
-  const { register, watch } = useForm<MndaFormValues>({
+  const { register, control } = useForm<MndaFormValues>({
     defaultValues: defaultMndaValues,
   });
-  const values = watch();
+  // useWatch's type is DeepPartial because RHF can't statically prove every
+  // field is registered, but MndaForm registers all of them via `register`,
+  // and defaultValues supplies every field up front, so the result is always
+  // a complete MndaFormValues in practice.
+  const values = useWatch({ control, defaultValue: defaultMndaValues }) as MndaFormValues;
 
   return (
-    <div className="mnda-scroll-pane grid grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:[grid-template-rows:minmax(0,1fr)]">
+    <div className="mnda-scroll-pane grid grid-cols-1 gap-8 lg:min-h-0 lg:flex-1 lg:grid-cols-2 lg:grid-rows-[minmax(0,1fr)]">
       <section
         data-testid="agreement-form-pane"
         className="mnda-scroll-pane flex flex-col gap-4 print:hidden lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2"

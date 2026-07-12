@@ -8,6 +8,13 @@ const inputClasses =
 const labelClasses = "text-sm font-medium text-foreground";
 const fieldsetClasses = "flex flex-col gap-4 border-t border-black/10 pt-6 first:border-t-0 first:pt-0 dark:border-white/10";
 
+const PARTY_FIELDS: { key: keyof MndaFormValues["party1"]; label: string; placeholder?: string }[] = [
+  { key: "name", label: "Print Name" },
+  { key: "title", label: "Title" },
+  { key: "company", label: "Company" },
+  { key: "noticeAddress", label: "Notice Address", placeholder: "Email or postal address" },
+];
+
 function PartyFields({
   register,
   party,
@@ -21,26 +28,16 @@ function PartyFields({
     <fieldset className={fieldsetClasses}>
       <legend className="mb-1 text-base font-semibold">{title}</legend>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <label className="flex flex-col gap-1">
-          <span className={labelClasses}>Print Name</span>
-          <input className={inputClasses} {...register(`${party}.name`)} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClasses}>Title</span>
-          <input className={inputClasses} {...register(`${party}.title`)} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClasses}>Company</span>
-          <input className={inputClasses} {...register(`${party}.company`)} />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className={labelClasses}>Notice Address</span>
-          <input
-            className={inputClasses}
-            placeholder="Email or postal address"
-            {...register(`${party}.noticeAddress`)}
-          />
-        </label>
+        {PARTY_FIELDS.map((field) => (
+          <label key={field.key} className="flex flex-col gap-1">
+            <span className={labelClasses}>{field.label}</span>
+            <input
+              className={inputClasses}
+              placeholder={field.placeholder}
+              {...register(`${party}.${field.key}`)}
+            />
+          </label>
+        ))}
       </div>
     </fieldset>
   );

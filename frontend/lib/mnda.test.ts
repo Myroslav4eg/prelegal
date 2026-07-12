@@ -2,22 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   confidentialityTermPhrase,
   confidentialityTermSummary,
-  defaultMndaValues,
   fillStandardTerms,
   formatLongDate,
   mndaTermPhrase,
   mndaTermSummary,
-  type MndaFormValues,
 } from "./mnda";
-
-function makeValues(overrides: Partial<MndaFormValues> = {}): MndaFormValues {
-  return {
-    ...defaultMndaValues,
-    party1: { ...defaultMndaValues.party1 },
-    party2: { ...defaultMndaValues.party2 },
-    ...overrides,
-  };
-}
+import { makeValues } from "./mnda.testHelpers";
 
 describe("formatLongDate", () => {
   it("returns a bracketed placeholder for an empty date", () => {
@@ -45,6 +35,11 @@ describe("mndaTermSummary", () => {
       "Continues until terminated in accordance with the terms of the MNDA.",
     );
   });
+
+  it("falls back to 1 year instead of rendering NaN when the years field is cleared", () => {
+    const values = makeValues({ mndaTermOption: "expires", mndaTermYears: NaN });
+    expect(mndaTermSummary(values)).toBe("Expires 1 year(s) from the Effective Date.");
+  });
 });
 
 describe("mndaTermPhrase", () => {
@@ -59,6 +54,11 @@ describe("mndaTermPhrase", () => {
       "period ending upon termination of this MNDA in accordance with its terms",
     );
   });
+
+  it("falls back to 1 year instead of NaN when the years field is cleared", () => {
+    const values = makeValues({ mndaTermOption: "expires", mndaTermYears: NaN });
+    expect(mndaTermPhrase(values)).toBe("1-year period following the Effective Date");
+  });
 });
 
 describe("confidentialityTermSummary", () => {
@@ -70,6 +70,11 @@ describe("confidentialityTermSummary", () => {
   it("describes a perpetual term", () => {
     const values = makeValues({ confidentialityTermOption: "perpetuity" });
     expect(confidentialityTermSummary(values)).toBe("In perpetuity.");
+  });
+
+  it("falls back to 1 year instead of NaN when the years field is cleared", () => {
+    const values = makeValues({ confidentialityTermOption: "years", confidentialityTermYears: NaN });
+    expect(confidentialityTermSummary(values)).toContain("1 year(s) from the Effective Date");
   });
 });
 
@@ -84,6 +89,11 @@ describe("confidentialityTermPhrase", () => {
   it("renders an inline phrase for a perpetual term", () => {
     const values = makeValues({ confidentialityTermOption: "perpetuity" });
     expect(confidentialityTermPhrase(values)).toBe("an indefinite period, in perpetuity");
+  });
+
+  it("falls back to 1 year instead of NaN when the years field is cleared", () => {
+    const values = makeValues({ confidentialityTermOption: "years", confidentialityTermYears: NaN });
+    expect(confidentialityTermPhrase(values)).toContain("1-year period following the Effective Date");
   });
 });
 

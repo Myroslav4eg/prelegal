@@ -8,26 +8,25 @@ import {
   type MndaFormValues,
 } from "@/lib/mnda";
 
+const fieldLabelClasses = "text-xs uppercase tracking-wide text-black/60";
+
+const PARTY_FIELDS: { key: keyof MndaFormValues["party1"]; label: string }[] = [
+  { key: "name", label: "Print Name" },
+  { key: "title", label: "Title" },
+  { key: "company", label: "Company" },
+  { key: "noticeAddress", label: "Notice Address" },
+];
+
 function PartyColumn({ party, label }: { party: MndaFormValues["party1"]; label: string }) {
   return (
     <div className="flex flex-col gap-2 text-sm">
       <div className="font-semibold">{label}</div>
-      <div>
-        <div className="text-xs text-foreground/60">Print Name</div>
-        <div>{party.name || "—"}</div>
-      </div>
-      <div>
-        <div className="text-xs text-foreground/60">Title</div>
-        <div>{party.title || "—"}</div>
-      </div>
-      <div>
-        <div className="text-xs text-foreground/60">Company</div>
-        <div>{party.company || "—"}</div>
-      </div>
-      <div>
-        <div className="text-xs text-foreground/60">Notice Address</div>
-        <div>{party.noticeAddress || "—"}</div>
-      </div>
+      {PARTY_FIELDS.map((field) => (
+        <div key={field.key}>
+          <div className="text-xs text-foreground/60">{field.label}</div>
+          <div>{party[field.key] || "—"}</div>
+        </div>
+      ))}
     </div>
   );
 }
@@ -54,33 +53,33 @@ export default function MndaDocument({
         <h2 className="text-lg font-semibold">Cover Page</h2>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">Purpose</div>
+          <div className={fieldLabelClasses}>Purpose</div>
           <p>{values.purpose || "—"}</p>
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">Effective Date</div>
+          <div className={fieldLabelClasses}>Effective Date</div>
           <p>{formatLongDate(values.effectiveDate)}</p>
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">MNDA Term</div>
+          <div className={fieldLabelClasses}>MNDA Term</div>
           <p>{mndaTermSummary(values)}</p>
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">Term of Confidentiality</div>
+          <div className={fieldLabelClasses}>Term of Confidentiality</div>
           <p>{confidentialityTermSummary(values)}</p>
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">Governing Law & Jurisdiction</div>
+          <div className={fieldLabelClasses}>Governing Law & Jurisdiction</div>
           <p>Governing Law: {values.governingLaw || "—"}</p>
           <p>Jurisdiction: {values.jurisdiction || "—"}</p>
         </div>
 
         <div>
-          <div className="text-xs uppercase tracking-wide text-black/60">MNDA Modifications</div>
+          <div className={fieldLabelClasses}>MNDA Modifications</div>
           <p>{values.modifications || "None."}</p>
         </div>
 

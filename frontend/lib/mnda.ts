@@ -54,27 +54,36 @@ export function formatLongDate(dateStr: string): string {
   });
 }
 
+/**
+ * The years inputs use `valueAsNumber`, which is `NaN` while the field is
+ * empty (e.g. the user briefly clears it to type a new value). Falling back
+ * to 1 avoids leaking a literal "NaN" into the rendered agreement.
+ */
+function safeYears(years: number): number {
+  return Number.isFinite(years) && years > 0 ? years : 1;
+}
+
 export function mndaTermSummary(values: MndaFormValues): string {
   return values.mndaTermOption === "expires"
-    ? `Expires ${values.mndaTermYears} year(s) from the Effective Date.`
+    ? `Expires ${safeYears(values.mndaTermYears)} year(s) from the Effective Date.`
     : "Continues until terminated in accordance with the terms of the MNDA.";
 }
 
 export function mndaTermPhrase(values: MndaFormValues): string {
   return values.mndaTermOption === "expires"
-    ? `${values.mndaTermYears}-year period following the Effective Date`
+    ? `${safeYears(values.mndaTermYears)}-year period following the Effective Date`
     : "period ending upon termination of this MNDA in accordance with its terms";
 }
 
 export function confidentialityTermSummary(values: MndaFormValues): string {
   return values.confidentialityTermOption === "years"
-    ? `${values.confidentialityTermYears} year(s) from the Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.`
+    ? `${safeYears(values.confidentialityTermYears)} year(s) from the Effective Date, but in the case of trade secrets until Confidential Information is no longer considered a trade secret under applicable laws.`
     : "In perpetuity.";
 }
 
 export function confidentialityTermPhrase(values: MndaFormValues): string {
   return values.confidentialityTermOption === "years"
-    ? `${values.confidentialityTermYears}-year period following the Effective Date (except trade secrets, which remain protected for as long as they qualify as a trade secret under applicable law)`
+    ? `${safeYears(values.confidentialityTermYears)}-year period following the Effective Date (except trade secrets, which remain protected for as long as they qualify as a trade secret under applicable law)`
     : "an indefinite period, in perpetuity";
 }
 
