@@ -1,4 +1,4 @@
-import { test, expect, type Locator } from "@playwright/test";
+import { test, expect, type Locator } from "./fixtures";
 
 async function scrollTopOf(locator: Locator): Promise<number> {
   return locator.evaluate((el) => el.scrollTop);
@@ -73,8 +73,9 @@ test.describe("Mutual NDA creator", () => {
 
     const scrollYBefore = await page.evaluate(() => window.scrollY);
     await page.mouse.wheel(0, 1000);
-    const scrollYAfter = await page.evaluate(() => window.scrollY);
-    expect(scrollYAfter).toBeGreaterThan(scrollYBefore);
+    // The browser applies wheel-triggered scrolling asynchronously, so poll
+    // rather than reading window.scrollY immediately after dispatching.
+    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollYBefore);
   });
 
   test("Download PDF triggers the print dialog without a JS error", async ({ page }) => {

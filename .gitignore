@@ -40,6 +40,10 @@ pip-wheel-metadata/
 *.db
 *.sqlite3
 
+# Backend static frontend export (build artifact, copied in at build/serve time)
+backend/static/*
+!backend/static/.gitkeep
+
 # --- Next.js / Node ---
 node_modules/
 .next/

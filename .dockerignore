@@ -1,0 +1,13 @@
+**/node_modules
+**/.venv
+**/.next
+**/out
+**/__pycache__
+.git
+backend/static
+backend/data
+frontend/test-results
+frontend/playwright-report
+*.db
+*.sqlite3
+.env

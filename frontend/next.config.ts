@@ -9,6 +9,8 @@ import path from "path";
 const repoRoot = path.join(__dirname, "..");
 
 const nextConfig: NextConfig = {
+  output: "export",
+  trailingSlash: true,
   outputFileTracingRoot: repoRoot,
   outputFileTracingIncludes: {
     "/": ["../templates/Mutual-NDA.md"],
