@@ -15,7 +15,7 @@ export default async function Home() {
     <AuthGate>
       <div className="mnda-scroll-pane mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col gap-8 px-6 py-10">
         <header className="flex flex-col gap-1 print:hidden">
-          <h1 className="text-2xl font-bold">Mutual NDA Creator</h1>
+          <h1 className="text-2xl font-bold text-dark-navy dark:text-foreground">Mutual NDA Creator</h1>
           <p className="text-sm text-foreground/60">
             Fill in the form to generate a Common Paper Mutual Non-Disclosure Agreement, then download it as
             a PDF.
