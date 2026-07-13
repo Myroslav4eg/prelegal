@@ -22,7 +22,7 @@ export default function MndaApp({ rawStandardTerms }: { rawStandardTerms: string
         className="mnda-scroll-pane flex flex-col gap-4 print:hidden lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-2"
       >
         <div>
-          <h2 className="text-lg font-semibold">Agreement details</h2>
+          <h2 className="text-lg font-semibold text-dark-navy dark:text-foreground">Agreement details</h2>
           <p className="text-sm text-foreground/60">
             Fill in the fields below — the preview on the right updates as you type.
           </p>
@@ -39,11 +39,11 @@ export default function MndaApp({ rawStandardTerms }: { rawStandardTerms: string
         className="mnda-scroll-pane flex flex-col gap-4 lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pl-2"
       >
         <div className="flex items-center justify-between print:hidden">
-          <h2 className="text-lg font-semibold">Preview</h2>
+          <h2 className="text-lg font-semibold text-dark-navy dark:text-foreground">Preview</h2>
           <button
             type="button"
             onClick={() => window.print()}
-            className="rounded-md bg-foreground px-4 py-2 text-sm font-medium text-background hover:opacity-90"
+            className="rounded-md bg-purple-secondary px-4 py-2 text-sm font-medium text-white hover:opacity-90"
           >
             Download PDF
           </button>
