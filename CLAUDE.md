@@ -8,7 +8,7 @@ The available documents are covered in the catalog.json file in the project root
 
 @catalog.json
 
-The current implementation supports one document type (Mutual NDA) via a client-side form, not yet AI chat, and uses a fake login rather than full user authentication or document persistence. See "Implementation status" below.
+The current implementation supports one document type (Mutual NDA), filled in via an AI chat, and uses a fake login rather than full user authentication or document persistence. See "Implementation status" below.
 
 ## Development process
 
@@ -21,7 +21,9 @@ When instructed to build a feature:
 
 ## AI design
 
-When writing code to make calls to LLMs, use your Cerebras skill to use LiteLLM via OpenRouter to the `openrouter/openai/gpt-oss-120b:free` model with Cerebras as the inference provider. You should use Structured Outputs so that you can interpret the results and populate fields in the legal document.
+When writing code to make calls to LLMs, use your Cerebras skill to use LiteLLM via OpenRouter to the `openrouter/openai/gpt-oss-120b` model with Cerebras as the inference provider. You should use Structured Outputs so that you can interpret the results and populate fields in the legal document.
+
+Note: the `:free` tier of this model was discontinued by OpenRouter; the paid slug above is required and calls incur real per-request charges on the `OPENROUTER_API_KEY` account.
 
 There is an OPENROUTER_API_KEY in the .env file in the project root.
 
@@ -62,5 +64,5 @@ Backend available at http://localhost:8000
 
 - PL-7 (V1 foundation) is done: `backend/` is a uv + FastAPI project using raw `sqlite3` (no ORM); the whole app runs as a single Docker container with the frontend statically exported and served by FastAPI on port 8000; `scripts/start-*`/`stop-*` work for mac/linux/windows.
 - Login is fake: any email/password is accepted, a user is get-or-created by email, and a session cookie is issued. There is no real credential check, password storage, or logout UI yet.
-- Only the Mutual NDA document type is implemented, via a plain client-side form — not AI chat, and not the other 10 document types in the catalog.
-- No AI/LLM integration yet (the Cerebras/OpenRouter setup above is not wired into any code path), and no document persistence beyond the `users`/`sessions` tables used for the fake login.
+- PL-8 (AI chat) is done: the Mutual NDA creator is now filled in via a freeform AI chat (backend `/api/mnda/chat`, using the Cerebras skill with Structured Outputs) instead of a manual form; the AI asks fixed-order questions, extracts fields turn by turn, and tells the user once every field is filled. Still only the Mutual NDA document type — not the other 10 in the catalog, and chat history is not persisted (stateless backend, frontend holds it in memory).
+- No document persistence beyond the `users`/`sessions` tables used for the fake login.

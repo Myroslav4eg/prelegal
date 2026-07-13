@@ -10,11 +10,16 @@ import sqlite3
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+from dotenv import load_dotenv
 from fastapi import Cookie, FastAPI, HTTPException, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from app import db
+from app.chat import ChatMessage
+from app.mnda import MndaChatTurn, run_mnda_chat_turn
+
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 SESSION_COOKIE = "session_id"
 STATIC_DIR = Path(os.environ.get("STATIC_DIR", Path(__file__).resolve().parent.parent / "static"))
@@ -70,6 +75,16 @@ def logout(response: Response, session_id: str | None = Cookie(default=None)) ->
             db.delete_session(conn, session_id)
     response.delete_cookie(SESSION_COOKIE, path="/")
     return {"ok": True}
+
+
+class ChatRequest(BaseModel):
+    messages: list[ChatMessage]
+
+
+@app.post("/api/mnda/chat", response_model=MndaChatTurn)
+def mnda_chat(body: ChatRequest, session_id: str | None = Cookie(default=None)) -> MndaChatTurn:
+    _current_user(session_id)
+    return run_mnda_chat_turn(body.messages)
 
 
 if STATIC_DIR.exists():
