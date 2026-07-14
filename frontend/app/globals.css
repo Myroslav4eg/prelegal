@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -24,9 +26,22 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #1c1c1e;
+    --foreground: #e8e8e9;
   }
+}
+
+/* Explicit overrides for the manual theme toggle - win over the system
+   media query above regardless of source order, since an attribute
+   selector on :root is more specific than a plain :root. */
+:root[data-theme="light"] {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+:root[data-theme="dark"] {
+  --background: #1c1c1e;
+  --foreground: #e8e8e9;
 }
 
 body {

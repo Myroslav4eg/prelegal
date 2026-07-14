@@ -20,12 +20,6 @@ export default async function Home() {
   return (
     <AuthGate>
       <div className="document-scroll-pane mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col gap-8 px-6 py-10">
-        <header className="flex flex-col gap-1 print:hidden">
-          <h1 className="text-2xl font-bold text-dark-navy dark:text-foreground">Legal Agreement Creator</h1>
-          <p className="text-sm text-foreground/60">
-            Chat with the AI to build any of our supported legal agreements, then download it as a PDF.
-          </p>
-        </header>
         <DocumentApp templates={templates} />
       </div>
     </AuthGate>

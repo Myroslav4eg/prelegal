@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import type { DocumentValues } from "@/lib/documents/types";
 import {
@@ -30,6 +30,12 @@ export default function DocumentChat({
   const [draft, setDraft] = useState("");
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [done, setDone] = useState(false);
+  const messagesRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    const el = messagesRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, status, done]);
 
   async function sendTurn(nextMessages: ChatMessage[]) {
     setMessages(nextMessages);
@@ -67,13 +73,29 @@ export default function DocumentChat({
   }
 
   return (
-    <div className="flex h-[32rem] shrink-0 flex-col rounded-lg border border-blue-primary/30 bg-white shadow-sm dark:border-blue-primary/40 dark:bg-black/40">
-      <div data-testid="chat-messages" className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4">
+    <div className="flex h-[28rem] min-h-0 flex-col rounded-lg border border-blue-primary/30 bg-white shadow-sm lg:h-auto lg:flex-1 dark:border-blue-primary/40 dark:bg-white/5">
+      <div
+        data-testid="chat-messages"
+        ref={messagesRef}
+        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4"
+      >
         {messages.map((message, index) => (
           <p key={index} className={bubbleClasses[message.role]}>
             {message.content}
           </p>
         ))}
+
+        {status === "sending" && (
+          <p
+            data-testid="chat-loading"
+            className={`${bubbleClasses.assistant} flex items-center gap-1`}
+            aria-label="Waiting for a response"
+          >
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
+            <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
+          </p>
+        )}
 
         {done && (
           <p className="rounded-md bg-accent-yellow/20 px-3 py-2 text-sm text-dark-navy dark:text-foreground">
@@ -93,7 +115,7 @@ export default function DocumentChat({
 
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-black/10 p-3 dark:border-white/10">
         <input
-          className="flex-1 rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-primary focus:outline-none dark:border-white/15 dark:bg-black"
+          className="flex-1 rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-primary focus:outline-none dark:border-white/15 dark:bg-white/5"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}
           disabled={status === "sending"}

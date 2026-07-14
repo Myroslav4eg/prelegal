@@ -127,6 +127,11 @@ test.describe("Legal Agreement Creator", () => {
     for (let i = 0; i < 8; i++) {
       await sendChatMessage(page, `Answer number ${i}`);
     }
+    // The loop above never waits for the final reply, since there is no
+    // subsequent send to block on the input being re-enabled - wait for it
+    // explicitly so the last message (and its auto-scroll) has landed before
+    // the snapshots below.
+    await expect(page.getByPlaceholder("Type your answer...")).toBeEnabled();
 
     const heightAfter = (await chatMessages.boundingBox())?.height;
     // The widget's own height must not grow with the conversation - only its
