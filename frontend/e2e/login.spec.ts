@@ -8,14 +8,14 @@ test.describe("Login gate", () => {
     await expect(page.getByRole("heading", { name: "Log in" })).toBeVisible();
   });
 
-  test("logging in with any credentials reaches the MNDA creator", async ({ page }) => {
+  test("logging in with any credentials reaches the Legal Agreement Creator", async ({ page }) => {
     await page.goto("/login");
 
     await page.getByLabel("Email").fill("person@example.com");
     await page.getByLabel("Password").fill("anything");
     await page.getByRole("button", { name: "Log in" }).click();
 
-    await expect(page.getByRole("heading", { name: "Mutual NDA Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Legal Agreement Creator" })).toBeVisible();
   });
 
   test("session persists across a reload", async ({ page }) => {
@@ -23,10 +23,10 @@ test.describe("Login gate", () => {
     await page.getByLabel("Email").fill("person@example.com");
     await page.getByLabel("Password").fill("anything");
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByRole("heading", { name: "Mutual NDA Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Legal Agreement Creator" })).toBeVisible();
 
     await page.reload();
 
-    await expect(page.getByRole("heading", { name: "Mutual NDA Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Legal Agreement Creator" })).toBeVisible();
   });
 });

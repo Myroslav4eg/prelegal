@@ -17,7 +17,8 @@ from pydantic import BaseModel
 
 from app import db
 from app.chat import ChatMessage
-from app.mnda import MndaChatTurn, run_mnda_chat_turn
+from app.documents.registry import REGISTRY
+from app.documents.selection import run_selection_turn
 
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
@@ -81,10 +82,18 @@ class ChatRequest(BaseModel):
     messages: list[ChatMessage]
 
 
-@app.post("/api/mnda/chat", response_model=MndaChatTurn)
-def mnda_chat(body: ChatRequest, session_id: str | None = Cookie(default=None)) -> MndaChatTurn:
+@app.post("/api/documents/chat")
+def selection_chat(body: ChatRequest, session_id: str | None = Cookie(default=None)):
     _current_user(session_id)
-    return run_mnda_chat_turn(body.messages)
+    return run_selection_turn(body.messages)
+
+
+@app.post("/api/documents/{slug}/chat")
+def document_chat(slug: str, body: ChatRequest, session_id: str | None = Cookie(default=None)):
+    _current_user(session_id)
+    if slug not in REGISTRY:
+        raise HTTPException(status_code=404, detail="Unknown document type")
+    return REGISTRY[slug].run_chat_turn(body.messages)
 
 
 if STATIC_DIR.exists():

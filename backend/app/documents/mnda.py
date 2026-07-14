@@ -1,20 +1,18 @@
-"""Chat-driven field extraction for the Mutual NDA, on top of app.chat's
-generic LLM-turn orchestration.
-"""
+"""Chat-driven field extraction for the Mutual NDA."""
 
 import datetime
 from typing import Literal
 
 from pydantic import BaseModel
 
-from app.chat import ChatMessage, run_chat_turn
+from app.chat import ChatMessage
+from app.chat import run_chat_turn as _run_chat_turn
+from app.documents.common import CHAT_RULES, PartyFields
 
-
-class PartyFields(BaseModel):
-    name: str | None = None
-    title: str | None = None
-    company: str | None = None
-    noticeAddress: str | None = None
+SLUG = "mnda"
+CATALOG_NAME = "Mutual Non-Disclosure Agreement"
+TEMPLATE_FILE = "Mutual-NDA.md"
+DOCUMENT_TITLE = "Mutual Non-Disclosure Agreement"
 
 
 class MndaChatFields(BaseModel):
@@ -50,23 +48,8 @@ Ask about the following fields, ONE QUESTION AT A TIME, in this fixed order:
 6. party1: name, title, company, and noticeAddress - ask for these together as one question
 7. party2: name, title, company, and noticeAddress - ask for these together as one question
 8. modifications - any modifications to the standard MNDA terms; if the user has none, record "None."
-
-Rules:
-- Extract multiple fields from a single answer if the user volunteers them, and skip questions
-  already answered.
-- Always return the full cumulative set of fields established so far across the ENTIRE
-  conversation, not just what changed this turn.
-- If the user corrects an earlier answer, update that field and acknowledge the correction in
-  your reply.
-- CRITICAL: as long as any field above is still unknown, your reply MUST end by asking the
-  question for the next unknown field in the fixed order, not just an acknowledgement like
-  "noted" or "got it" on its own. Never send a reply that fails to move the conversation
-  forward to the next unanswered field.
-- Set done=true once every field above has a value. Keep accepting corrections after that -
-  done is informational, not a lock, and should stay true unless a field becomes unknown again.
-- Keep replies short, plain text, no markdown.
-"""
+{CHAT_RULES}"""
 
 
-def run_mnda_chat_turn(messages: list[ChatMessage]) -> MndaChatTurn:
-    return run_chat_turn(SYSTEM_PROMPT, messages, MndaChatTurn)
+def run_chat_turn(messages: list[ChatMessage]) -> MndaChatTurn:
+    return _run_chat_turn(SYSTEM_PROMPT, messages, MndaChatTurn)

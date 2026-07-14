@@ -1,4 +1,7 @@
+import pytest
+
 from app import chat
+from app.documents.registry import REGISTRY
 
 
 def login(client):
@@ -6,24 +9,30 @@ def login(client):
 
 
 def test_chat_without_session_is_unauthorized(client):
-    response = client.post("/api/mnda/chat", json={"messages": []})
+    response = client.post("/api/documents/mnda/chat", json={"messages": []})
     assert response.status_code == 401
 
 
-def test_chat_returns_reply_and_fields(client, stub_completion):
+def test_unknown_document_slug_is_not_found(client):
     login(client)
-    stub_completion('{"reply": "What is the purpose?", "fields": {"purpose": null}, "done": false}')
+    response = client.post("/api/documents/not-a-real-document/chat", json={"messages": []})
+    assert response.status_code == 404
 
-    response = client.post("/api/mnda/chat", json={"messages": []})
+
+@pytest.mark.parametrize("slug", list(REGISTRY.keys()))
+def test_chat_turn_round_trips_for_every_registered_document(client, stub_completion, slug):
+    login(client)
+    stub_completion('{"reply": "Hi there.", "fields": {}, "done": false}')
+
+    response = client.post(f"/api/documents/{slug}/chat", json={"messages": []})
 
     assert response.status_code == 200
     body = response.json()
-    assert body["reply"] == "What is the purpose?"
+    assert body["reply"] == "Hi there."
     assert body["done"] is False
-    assert body["fields"]["purpose"] is None
 
 
-def test_chat_extracts_nested_party_fields(client, stub_completion):
+def test_chat_extracts_nested_party_fields_for_mnda(client, stub_completion):
     login(client)
     stub_completion(
         """
@@ -38,7 +47,7 @@ def test_chat_extracts_nested_party_fields(client, stub_completion):
     )
 
     response = client.post(
-        "/api/mnda/chat",
+        "/api/documents/mnda/chat",
         json={"messages": [{"role": "user", "content": "Party 1 is Jane Doe, CEO of Acme"}]},
     )
 
@@ -75,7 +84,7 @@ def test_chat_reports_done_when_all_fields_present(client, stub_completion):
         """
     )
 
-    response = client.post("/api/mnda/chat", json={"messages": []})
+    response = client.post("/api/documents/mnda/chat", json={"messages": []})
 
     assert response.status_code == 200
     assert response.json()["done"] is True
@@ -89,6 +98,6 @@ def test_chat_returns_502_when_llm_call_fails(client, monkeypatch):
 
     monkeypatch.setattr(chat, "completion", failing_completion)
 
-    response = client.post("/api/mnda/chat", json={"messages": []})
+    response = client.post("/api/documents/mnda/chat", json={"messages": []})
 
     assert response.status_code == 502

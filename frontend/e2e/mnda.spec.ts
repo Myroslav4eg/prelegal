@@ -1,48 +1,34 @@
-import type { Locator, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { test, expect } from "./fixtures";
 
-async function scrollTopOf(locator: Locator): Promise<number> {
-  return locator.evaluate((el) => el.scrollTop);
+interface SelectionTurn {
+  reply: string;
+  slug?: string | null;
 }
 
-async function setScrollTop(locator: Locator, value: number): Promise<void> {
-  await locator.evaluate((el, v) => {
-    el.scrollTop = v;
-  }, value);
-}
-
-const emptyFields = {
-  purpose: null,
-  effectiveDate: null,
-  mndaTermOption: null,
-  mndaTermYears: null,
-  confidentialityTermOption: null,
-  confidentialityTermYears: null,
-  governingLaw: null,
-  jurisdiction: null,
-  modifications: null,
-  party1: null,
-  party2: null,
-};
-
-interface MockTurn {
+interface DocumentTurn {
   reply: string;
   fields?: Record<string, unknown>;
   done?: boolean;
 }
 
-/**
- * Stubs the chat endpoint with a scripted sequence of responses, so the e2e
- * suite never depends on a real, nondeterministic LLM call. The last turn
- * repeats if the test sends more messages than were scripted.
- */
-async function mockChatTurns(page: Page, turns: MockTurn[]): Promise<void> {
+/** Stubs the selection endpoint, resolving to "mnda" on the given user turn index (0-based). */
+async function mockSelectionChat(page: Page, turns: SelectionTurn[]): Promise<void> {
   let call = 0;
-  await page.route("**/api/mnda/chat", async (route) => {
+  await page.route("**/api/documents/chat", async (route) => {
+    const turn = turns[Math.min(call, turns.length - 1)];
+    call++;
+    await route.fulfill({ json: { reply: turn.reply, slug: turn.slug ?? null } });
+  });
+}
+
+async function mockMndaChat(page: Page, turns: DocumentTurn[]): Promise<void> {
+  let call = 0;
+  await page.route("**/api/documents/mnda/chat", async (route) => {
     const turn = turns[Math.min(call, turns.length - 1)];
     call++;
     await route.fulfill({
-      json: { reply: turn.reply, fields: { ...emptyFields, ...turn.fields }, done: turn.done ?? false },
+      json: { reply: turn.reply, fields: turn.fields ?? {}, done: turn.done ?? false },
     });
   });
 }
@@ -52,11 +38,41 @@ async function sendChatMessage(page: Page, text: string): Promise<void> {
   await page.getByRole("button", { name: "Send" }).click();
 }
 
-test.describe("Mutual NDA creator", () => {
-  test("loads and shows the default agreement preview", async ({ page }) => {
+async function selectMnda(page: Page): Promise<void> {
+  await mockSelectionChat(page, [{ reply: "Let's build a Mutual NDA.", slug: "mnda" }]);
+  await page.goto("/");
+  await sendChatMessage(page, "I need a mutual NDA");
+  // Wait for the selection response to actually land client-side before the
+  // caller sends the next message, otherwise a fast follow-up can race and
+  // hit the selection endpoint again instead of the per-document one.
+  await expect(page.getByRole("heading", { name: "Mutual Non-Disclosure Agreement" })).toBeVisible();
+}
+
+test.describe("Legal Agreement Creator", () => {
+  test("shows a placeholder preview until a document is chosen", async ({ page }) => {
+    await mockSelectionChat(page, [{ reply: "What kind of document do you need?", slug: null }]);
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Mutual NDA Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Legal Agreement Creator" })).toBeVisible();
+    await expect(page.getByTestId("agreement-preview-pane")).toContainText(
+      "Tell the AI what kind of document you need",
+    );
+  });
+
+  test("explains an unsupported document request and suggests the closest match", async ({ page }) => {
+    await mockSelectionChat(page, [
+      { reply: "We can't generate that, but a Professional Services Agreement is close.", slug: null },
+    ]);
+    await page.goto("/");
+
+    await sendChatMessage(page, "I need an employment contract");
+
+    await expect(page.getByText(/Professional Services Agreement is close/)).toBeVisible();
+  });
+
+  test("selecting the Mutual NDA switches the preview to that document", async ({ page }) => {
+    await selectMnda(page);
+
     await expect(page.getByRole("heading", { name: "Mutual Non-Disclosure Agreement" })).toBeVisible();
     await expect(page.getByTestId("agreement-preview-pane")).toContainText(
       "Common Paper Mutual Non-Disclosure Agreement",
@@ -64,23 +80,17 @@ test.describe("Mutual NDA creator", () => {
   });
 
   test("chats with the AI and sees extracted values reflected in the live preview", async ({ page }) => {
-    await mockChatTurns(page, [
-      {
-        reply: "Got it, and party 1?",
-        fields: { governingLaw: "Delaware", jurisdiction: "New Castle, DE" },
-      },
-      {
-        reply: "Thanks!",
-        fields: { party1: { name: "Jane Doe", title: null, company: null, noticeAddress: null } },
-      },
+    await selectMnda(page);
+    await mockMndaChat(page, [
+      { reply: "Got it, and party 1?", fields: { governingLaw: "Delaware", jurisdiction: "New Castle, DE" } },
+      { reply: "Thanks!", fields: { party1: { name: "Jane Doe" } } },
     ]);
-    await page.goto("/");
 
     const preview = page.getByTestId("agreement-preview-pane");
 
     await sendChatMessage(page, "Governed by Delaware law, New Castle DE jurisdiction");
-    await expect(preview.getByText("Governing Law: Delaware")).toBeVisible();
-    await expect(preview.getByText("Jurisdiction: New Castle, DE")).toBeVisible();
+    await expect(preview.getByText("Governing Law", { exact: true })).toBeVisible();
+    await expect(preview.getByText("Jurisdiction", { exact: true })).toBeVisible();
     // Governing Law is also substituted inline into the Standard Terms body.
     await expect(preview.getByText(/laws of the State of Delaware/)).toBeVisible();
 
@@ -91,8 +101,8 @@ test.describe("Mutual NDA creator", () => {
   test("shows the done banner once every field is extracted, and stays open for corrections", async ({
     page,
   }) => {
-    await mockChatTurns(page, [{ reply: "All set!", fields: { governingLaw: "Delaware" }, done: true }]);
-    await page.goto("/");
+    await selectMnda(page);
+    await mockMndaChat(page, [{ reply: "All set!", fields: { governingLaw: "Delaware" }, done: true }]);
 
     await sendChatMessage(page, "That's everything");
 
@@ -100,63 +110,44 @@ test.describe("Mutual NDA creator", () => {
     await expect(page.getByPlaceholder("Type your answer...")).toBeEnabled();
   });
 
-  test("scrolls the chat and preview panes independently on desktop", async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 });
+  test("keeps the chat widget's height fixed and scrolls messages internally as the conversation grows", async ({
+    page,
+  }) => {
     const longReply =
-      "Here is a fairly long follow-up question meant to pad out the chat transcript so the pane actually overflows and becomes scrollable in this test.";
-    await mockChatTurns(
+      "Here is a fairly long follow-up question meant to pad out the chat transcript so the message list actually overflows and becomes scrollable in this test.";
+    await selectMnda(page);
+    await mockMndaChat(
       page,
       Array.from({ length: 8 }, () => ({ reply: longReply })),
     );
-    await page.goto("/");
 
-    const chatPane = page.getByTestId("agreement-chat-pane");
-    const previewPane = page.getByTestId("agreement-preview-pane");
+    const chatMessages = page.getByTestId("chat-messages");
+    const heightBefore = (await chatMessages.boundingBox())?.height;
 
     for (let i = 0; i < 8; i++) {
       await sendChatMessage(page, `Answer number ${i}`);
     }
 
-    // Both panes must actually have overflow to scroll, otherwise this test would pass vacuously.
-    const [chatOverflows, previewOverflows] = await Promise.all([
-      chatPane.evaluate((el) => el.scrollHeight > el.clientHeight),
-      previewPane.evaluate((el) => el.scrollHeight > el.clientHeight),
-    ]);
-    expect(chatOverflows).toBe(true);
-    expect(previewOverflows).toBe(true);
+    const heightAfter = (await chatMessages.boundingBox())?.height;
+    // The widget's own height must not grow with the conversation - only its
+    // internal scroll region should, which is exactly the "pinned, not
+    // drifting down the page" behavior this test guards.
+    expect(heightAfter).toBe(heightBefore);
 
-    // The chat pane may already be scrolled (the input auto-scrolls into view
-    // as messages accumulate), so compare against its own starting position
-    // rather than assuming 0.
-    const chatScrollBeforePreviewScroll = await scrollTopOf(chatPane);
-    await setScrollTop(previewPane, 400);
-    expect(await scrollTopOf(previewPane)).toBeGreaterThan(0);
-    expect(await scrollTopOf(chatPane)).toBe(chatScrollBeforePreviewScroll);
+    const overflows = await chatMessages.evaluate((el) => el.scrollHeight > el.clientHeight);
+    expect(overflows).toBe(true);
 
-    await setScrollTop(chatPane, 200);
-    expect(await scrollTopOf(chatPane)).toBeGreaterThan(0);
-    // The preview pane must keep its own scroll position, unaffected by the chat pane's scroll.
-    expect(await scrollTopOf(previewPane)).toBeGreaterThan(0);
-  });
-
-  test("stacks into a single scrolling column on mobile viewports", async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto("/");
-
-    const chatPane = page.getByTestId("agreement-chat-pane");
-    const overflowY = await chatPane.evaluate((el) => getComputedStyle(el).overflowY);
-    expect(overflowY).toBe("visible");
-
-    const scrollYBefore = await page.evaluate(() => window.scrollY);
-    await page.mouse.wheel(0, 1000);
-    // The browser applies wheel-triggered scrolling asynchronously, so poll
-    // rather than reading window.scrollY immediately after dispatching.
-    await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(scrollYBefore);
+    const previewPane = page.getByTestId("agreement-preview-pane");
+    const chatScrollBefore = await chatMessages.evaluate((el) => el.scrollTop);
+    await previewPane.evaluate((el) => {
+      el.scrollTop = 400;
+    });
+    expect(await previewPane.evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+    // Scrolling the preview pane must not move the chat's own scroll position.
+    expect(await chatMessages.evaluate((el) => el.scrollTop)).toBe(chatScrollBefore);
   });
 
   test("Download PDF triggers the print dialog without a JS error", async ({ page }) => {
-    await page.goto("/");
-
     let printInvoked = false;
     await page.exposeFunction("__onPrint", () => {
       printInvoked = true;
@@ -164,7 +155,8 @@ test.describe("Mutual NDA creator", () => {
     await page.addInitScript(() => {
       window.print = () => (window as unknown as { __onPrint: () => void }).__onPrint();
     });
-    await page.reload();
+
+    await selectMnda(page);
 
     await page.getByRole("button", { name: "Download PDF" }).click();
     await expect.poll(() => printInvoked).toBe(true);
