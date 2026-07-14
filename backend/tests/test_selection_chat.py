@@ -1,5 +1,5 @@
 def login(client):
-    client.post("/api/auth/login", json={"email": "person@example.com", "password": "x"})
+    client.post("/api/auth/signup", json={"email": "person@example.com", "password": "password123"})
 
 
 def test_selection_chat_without_session_is_unauthorized(client):

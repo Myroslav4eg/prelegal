@@ -1,15 +1,15 @@
 import AuthGate from "@/components/AuthGate";
 import AppShell from "@/components/AppShell";
-import DocumentApp from "@/components/DocumentApp";
+import DocumentHistoryApp from "@/components/DocumentHistoryApp";
 import { loadTemplates } from "@/lib/documents/loadTemplates";
 
-export default async function Home() {
+export default async function DocumentsPage() {
   const templates = await loadTemplates();
 
   return (
     <AuthGate>
       <AppShell>
-        <DocumentApp templates={templates} />
+        <DocumentHistoryApp templates={templates} />
       </AppShell>
     </AuthGate>
   );

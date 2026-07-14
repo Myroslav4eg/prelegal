@@ -89,4 +89,40 @@ describe("DocumentChat", () => {
 
     expect(await screen.findByText("Got it.")).toBeInTheDocument();
   });
+
+  it("returns focus to the input after a send/receive round-trip", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ reply: "Let's build a Pilot Agreement.", slug: "pilot-agreement" }),
+    );
+    const user = userEvent.setup();
+    render(<DocumentChat setValue={vi.fn()} onDocumentSelected={vi.fn()} />);
+
+    const input = screen.getByPlaceholderText("Type your answer...");
+    await user.type(input, "I want a pilot agreement");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    expect(await screen.findByText("Let's build a Pilot Agreement.")).toBeInTheDocument();
+    expect(input).toHaveFocus();
+  });
+
+  it("calls onTurnComplete with the latest fields and done flag once a document turn resolves", async () => {
+    const onTurnComplete = vi.fn();
+    vi.mocked(fetch)
+      .mockResolvedValueOnce(jsonResponse({ reply: "Great, a Mutual NDA it is.", slug: "mnda" }))
+      .mockResolvedValueOnce(
+        jsonResponse({ reply: "All set!", fields: { purpose: "Evaluating a deal" }, done: true }),
+      );
+    const user = userEvent.setup();
+    render(<DocumentChat setValue={vi.fn()} onDocumentSelected={vi.fn()} onTurnComplete={onTurnComplete} />);
+
+    await user.type(screen.getByPlaceholderText("Type your answer..."), "A mutual NDA");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+    await screen.findByText("Great, a Mutual NDA it is.");
+
+    await user.type(screen.getByPlaceholderText("Type your answer..."), "Evaluating a deal");
+    await user.click(screen.getByRole("button", { name: "Send" }));
+
+    await screen.findByText("All set!");
+    expect(onTurnComplete).toHaveBeenCalledWith({ purpose: "Evaluating a deal" }, true);
+  });
 });

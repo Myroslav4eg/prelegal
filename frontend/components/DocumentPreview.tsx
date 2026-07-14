@@ -3,6 +3,7 @@ import remarkGfm from "remark-gfm";
 import type { DocumentModule, FieldSpec } from "@/lib/documents/types";
 import { getParty, getValue, substituteTemplate } from "@/lib/documents/common";
 import type { DocumentValues } from "@/lib/documents/types";
+import AiDisclaimer from "@/components/AiDisclaimer";
 
 const fieldLabelClasses = "text-xs uppercase tracking-wide text-black/60";
 
@@ -56,6 +57,7 @@ export default function DocumentPreview({
       <header className="flex flex-col gap-1 border-b border-black/10 pb-4">
         <h1 className="text-2xl font-bold">{module.documentTitle}</h1>
         <p className="text-xs text-black/60">{module.subtitle}</p>
+        <AiDisclaimer />
       </header>
 
       {module.groups.map((group) => {

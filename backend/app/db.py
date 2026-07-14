@@ -5,11 +5,13 @@ The database is recreated from scratch on every application boot (see
 `CREATE TABLE` statements below.
 """
 
+import json
 import os
 import secrets
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Any
 
 _DEFAULT_DB_PATH = Path(__file__).resolve().parent.parent / "data" / "app.db"
 
@@ -31,6 +33,7 @@ def init_db() -> None:
             CREATE TABLE users (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 email TEXT NOT NULL UNIQUE,
+                password_hash TEXT NOT NULL,
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
             """
@@ -41,6 +44,18 @@ def init_db() -> None:
                 token TEXT PRIMARY KEY,
                 user_id INTEGER NOT NULL REFERENCES users(id),
                 created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+            """
+        )
+        conn.execute(
+            """
+            CREATE TABLE documents (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER NOT NULL REFERENCES users(id),
+                slug TEXT NOT NULL,
+                fields_json TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now'))
             )
             """
         )
@@ -61,15 +76,26 @@ def connection():
         conn.close()
 
 
-def get_or_create_user(conn: sqlite3.Connection, email: str) -> sqlite3.Row:
-    conn.execute(
-        "INSERT INTO users (email) VALUES (?) ON CONFLICT(email) DO NOTHING",
-        (email,),
-    )
-    conn.commit()
+class EmailAlreadyRegisteredError(Exception):
+    pass
+
+
+def create_user(conn: sqlite3.Connection, email: str, password_hash: str) -> sqlite3.Row:
+    try:
+        conn.execute(
+            "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+            (email, password_hash),
+        )
+        conn.commit()
+    except sqlite3.IntegrityError as exc:
+        raise EmailAlreadyRegisteredError from exc
     row = conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
     assert row is not None
     return row
+
+
+def get_user_by_email(conn: sqlite3.Connection, email: str) -> sqlite3.Row | None:
+    return conn.execute("SELECT * FROM users WHERE email = ?", (email,)).fetchone()
 
 
 def create_session(conn: sqlite3.Connection, user_id: int) -> str:
@@ -97,3 +123,41 @@ def get_user_by_session_token(conn: sqlite3.Connection, token: str) -> sqlite3.R
 def delete_session(conn: sqlite3.Connection, token: str) -> None:
     conn.execute("DELETE FROM sessions WHERE token = ?", (token,))
     conn.commit()
+
+
+def create_document(conn: sqlite3.Connection, user_id: int, slug: str, fields: dict[str, Any]) -> sqlite3.Row:
+    cursor = conn.execute(
+        "INSERT INTO documents (user_id, slug, fields_json) VALUES (?, ?, ?)",
+        (user_id, slug, json.dumps(fields)),
+    )
+    conn.commit()
+    row = conn.execute("SELECT * FROM documents WHERE id = ?", (cursor.lastrowid,)).fetchone()
+    assert row is not None
+    return row
+
+
+def update_document(conn: sqlite3.Connection, document_id: int, user_id: int, fields: dict[str, Any]) -> sqlite3.Row | None:
+    conn.execute(
+        """
+        UPDATE documents SET fields_json = ?, updated_at = datetime('now')
+        WHERE id = ? AND user_id = ?
+        """,
+        (json.dumps(fields), document_id, user_id),
+    )
+    conn.commit()
+    return conn.execute(
+        "SELECT * FROM documents WHERE id = ? AND user_id = ?", (document_id, user_id)
+    ).fetchone()
+
+
+def list_documents(conn: sqlite3.Connection, user_id: int) -> list[sqlite3.Row]:
+    return conn.execute(
+        "SELECT * FROM documents WHERE user_id = ? ORDER BY created_at DESC",
+        (user_id,),
+    ).fetchall()
+
+
+def get_document(conn: sqlite3.Connection, document_id: int, user_id: int) -> sqlite3.Row | None:
+    return conn.execute(
+        "SELECT * FROM documents WHERE id = ? AND user_id = ?", (document_id, user_id)
+    ).fetchone()

@@ -53,7 +53,7 @@ test.describe("Legal Agreement Creator", () => {
     await mockSelectionChat(page, [{ reply: "What kind of document do you need?", slug: null }]);
     await page.goto("/");
 
-    await expect(page.getByRole("heading", { name: "Legal Agreement Creator" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "New agreement" })).toBeVisible();
     await expect(page.getByTestId("agreement-preview-pane")).toContainText(
       "Tell the AI what kind of document you need",
     );

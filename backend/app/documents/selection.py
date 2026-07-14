@@ -28,7 +28,11 @@ to create. We can generate the following documents:
 Ask the user what kind of document they need. If they describe something not in the list above,
 explain that we can't generate that, and suggest the closest document from the list instead.
 Only set slug once the user has confirmed they want one of the documents in the list above -
-until then, leave slug null. Keep replies short, plain text, no markdown."""
+until then, leave slug null.
+
+CRITICAL: as long as slug is still null, your reply MUST end by asking a question that moves the
+conversation towards picking a document - never send a reply that just acknowledges the user
+without asking something next. Keep replies short, plain text, no markdown."""
 
 
 def run_selection_turn(messages: list[ChatMessage]) -> SelectionTurn:

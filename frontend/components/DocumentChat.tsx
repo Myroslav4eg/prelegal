@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { UseFormSetValue } from "react-hook-form";
 import type { DocumentValues } from "@/lib/documents/types";
 import {
@@ -19,9 +19,11 @@ const bubbleClasses = {
 export default function DocumentChat({
   setValue,
   onDocumentSelected,
+  onTurnComplete,
 }: {
   setValue: UseFormSetValue<DocumentValues>;
   onDocumentSelected: (slug: string) => void;
+  onTurnComplete?: (fields: DocumentValues, done: boolean) => void | Promise<void>;
 }) {
   const [slug, setSlug] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -31,11 +33,16 @@ export default function DocumentChat({
   const [status, setStatus] = useState<"idle" | "sending" | "error">("idle");
   const [done, setDone] = useState(false);
   const messagesRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useLayoutEffect(() => {
     const el = messagesRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages, status, done]);
+
+  useEffect(() => {
+    if (status !== "sending") inputRef.current?.focus();
+  }, [status]);
 
   async function sendTurn(nextMessages: ChatMessage[]) {
     setMessages(nextMessages);
@@ -53,6 +60,11 @@ export default function DocumentChat({
         setMessages([...nextMessages, { role: "assistant", content: result.reply }]);
         applyChatFields(result.fields, setValue);
         setDone(result.done);
+        // Awaited so the input stays disabled until any history save this
+        // triggers finishes - otherwise a fast follow-up correction could
+        // fire a second create instead of an update (see onTurnComplete
+        // callers for the create-once-then-update-by-id logic).
+        await onTurnComplete?.(result.fields, result.done);
       }
       setStatus("idle");
     } catch {
@@ -115,6 +127,7 @@ export default function DocumentChat({
 
       <form onSubmit={handleSubmit} className="flex gap-2 border-t border-black/10 p-3 dark:border-white/10">
         <input
+          ref={inputRef}
           className="flex-1 rounded-md border border-black/15 bg-white px-3 py-2 text-sm shadow-sm focus:border-blue-primary focus:outline-none dark:border-white/15 dark:bg-white/5"
           value={draft}
           onChange={(event) => setDraft(event.target.value)}

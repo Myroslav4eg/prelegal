@@ -5,7 +5,7 @@ from app.documents.registry import REGISTRY
 
 
 def login(client):
-    client.post("/api/auth/login", json={"email": "person@example.com", "password": "x"})
+    client.post("/api/auth/signup", json={"email": "person@example.com", "password": "password123"})
 
 
 def test_chat_without_session_is_unauthorized(client):
